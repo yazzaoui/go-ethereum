@@ -20,21 +20,19 @@ type InternalBackend struct {
 	TxSender *func(signedTx *types.Transaction) error
 }
 
-func NewInternalBackend(txSender *func(signedTx *types.Transaction) error) func(*core.BlockChain, ethdb.Database) bind.ContractBackend {
-	return func(blockchain *core.BlockChain, db ethdb.Database) bind.ContractBackend {
-		backend := &InternalBackend{
-			SimulatedBackend{
-				database:   db,
-				blockchain: blockchain,
-				config:     blockchain.Config(),
-			}, txSender}
+func NewInternalBackend(blockchain *core.BlockChain, db ethdb.Database) bind.ContractBackend {
+	backend := &InternalBackend{
+		SimulatedBackend{
+			database:   db,
+			blockchain: blockchain,
+			config:     blockchain.Config(),
+		}, nil}
 
-		filterBackend := &filterBackend{db, blockchain, &backend.SimulatedBackend}
-		filterSystem := filters.NewFilterSystem(filterBackend, filters.Config{})
-		backend.events = filters.NewEventSystem(filterSystem, false)
-		backend.filterSystem = filterSystem
-		return backend
-	}
+	filterBackend := &filterBackend{db, blockchain, &backend.SimulatedBackend}
+	filterSystem := filters.NewFilterSystem(filterBackend, filters.Config{})
+	backend.events = filters.NewEventSystem(filterSystem, false)
+	backend.filterSystem = filterSystem
+	return backend
 }
 
 // SuggestGasTipCap doesn't provide any tips with accountability.
